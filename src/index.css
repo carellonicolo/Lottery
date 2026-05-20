@@ -367,3 +367,43 @@
   color: hsl(210 40% 98%);
   background: hsl(225 50% 12%);
 }
+
+/* ===== Win for Life Scoped Theme ===== */
+.theme-winforlife {
+  --background: 140 70% 10%;
+  --foreground: 140 20% 98%;
+
+  --card: 140 50% 14%;
+  --card-foreground: 140 20% 98%;
+
+  --popover: 140 50% 14%;
+  --popover-foreground: 140 20% 98%;
+
+  --primary: 140 70% 40%; /* Emerald Green */
+  --primary-foreground: 140 20% 98%;
+
+  --secondary: 140 50% 20%;
+  --secondary-foreground: 140 20% 98%;
+
+  --muted: 140 50% 20%;
+  --muted-foreground: 140 20% 65%;
+
+  --accent: 350 80% 50%; /* Fiery Red */
+  --accent-foreground: 140 20% 98%;
+
+  --destructive: 350 80% 50%;
+  --destructive-foreground: 140 20% 98%;
+
+  --border: 140 50% 20%;
+  --input: 140 50% 20%;
+  --ring: 140 70% 40%;
+
+  --radius: 0.75rem;
+
+  --glass: 140 50% 14%;
+  --glass-border: 140 50% 25%;
+
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  color: hsl(140 20% 98%);
+  background: hsl(140 70% 10%);
+}

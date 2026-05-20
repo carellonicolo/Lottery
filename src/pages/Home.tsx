@@ -37,7 +37,7 @@ const Home = () => {
         Nessun denaro reale coinvolto.
       </p>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 w-full max-w-5xl">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 w-full max-w-6xl">
         {/* Gioco del Lotto */}
         <Link
           to="/giocodellotto"
@@ -119,6 +119,35 @@ const Home = () => {
           <div
             className="mt-4 inline-flex items-center text-sm font-semibold gap-1 transition-colors"
             style={{ color: 'hsl(45 90% 55%)' }}
+          >
+            Gioca ora
+            <span className="group-hover:translate-x-1 transition-transform">&rarr;</span>
+          </div>
+        </Link>
+
+        {/* Win for Life */}
+        <Link
+          to="/winforlife"
+          className="group relative rounded-2xl p-6 sm:p-8 border transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl"
+          style={{
+            background: 'linear-gradient(135deg, hsl(140 70% 40% / 0.12), hsl(350 80% 50% / 0.06))',
+            borderColor: 'hsl(140 70% 40% / 0.3)',
+          }}
+        >
+          <div className="text-4xl sm:text-5xl mb-4">🏠</div>
+          <h2
+            className="text-xl sm:text-2xl font-bold mb-2"
+            style={{ color: 'hsl(140 70% 55%)' }}
+          >
+            Win for Life
+          </h2>
+          <p className="text-sm" style={{ color: 'hsl(220 15% 60%)' }}>
+            10 numeri su 20 + Numerone. Scopri la perfetta
+            simmetria della curva a campana.
+          </p>
+          <div
+            className="mt-4 inline-flex items-center text-sm font-semibold gap-1 transition-colors"
+            style={{ color: 'hsl(140 70% 55%)' }}
           >
             Gioca ora
             <span className="group-hover:translate-x-1 transition-transform">&rarr;</span>
