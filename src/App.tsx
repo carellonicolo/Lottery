@@ -9,6 +9,7 @@ import NotFound from "./pages/NotFound";
 
 const LottoIndex = lazy(() => import("./pages/LottoIndex"));
 const SuperenalottoIndex = lazy(() => import("./pages/SuperenalottoIndex"));
+const MilliondayIndex = lazy(() => import("./pages/MilliondayIndex"));
 
 const queryClient = new QueryClient();
 
@@ -34,6 +35,7 @@ const App = () => (
             <Route path="/" element={<Home />} />
             <Route path="/giocodellotto" element={<LottoIndex />} />
             <Route path="/superenalotto" element={<SuperenalottoIndex />} />
+            <Route path="/millionday" element={<MilliondayIndex />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>

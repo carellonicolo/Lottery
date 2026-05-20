@@ -327,3 +327,43 @@
   color: hsl(210 40% 95%);
   background: hsl(225 25% 8%);
 }
+
+/* ===== MillionDAY Scoped Theme ===== */
+.theme-millionday {
+  --background: 225 50% 12%;
+  --foreground: 210 40% 98%;
+
+  --card: 225 45% 16%;
+  --card-foreground: 210 40% 98%;
+
+  --popover: 225 45% 16%;
+  --popover-foreground: 210 40% 98%;
+
+  --primary: 45 100% 51%;
+  --primary-foreground: 225 50% 12%;
+
+  --secondary: 225 40% 20%;
+  --secondary-foreground: 210 40% 98%;
+
+  --muted: 225 40% 20%;
+  --muted-foreground: 215 20.2% 65.1%;
+
+  --accent: 45 100% 51%;
+  --accent-foreground: 225 50% 12%;
+
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 210 40% 98%;
+
+  --border: 225 40% 20%;
+  --input: 225 40% 20%;
+  --ring: 45 100% 51%;
+
+  --radius: 0.75rem;
+
+  --glass: 225 45% 16%;
+  --glass-border: 225 40% 25%;
+
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  color: hsl(210 40% 98%);
+  background: hsl(225 50% 12%);
+}

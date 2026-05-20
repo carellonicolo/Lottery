@@ -23,7 +23,7 @@ const Home = () => {
         Nessun denaro reale coinvolto.
       </p>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 w-full max-w-2xl">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 w-full max-w-5xl">
         {/* Gioco del Lotto */}
         <Link
           to="/giocodellotto"
@@ -72,6 +72,35 @@ const Home = () => {
           <p className="text-sm" style={{ color: 'hsl(220 15% 60%)' }}>
             Schedina, simulazione Monte Carlo, formule combinatorie
             e probabilità del jackpot.
+          </p>
+          <div
+            className="mt-4 inline-flex items-center text-sm font-semibold gap-1 transition-colors"
+            style={{ color: 'hsl(45 90% 55%)' }}
+          >
+            Gioca ora
+            <span className="group-hover:translate-x-1 transition-transform">&rarr;</span>
+          </div>
+        </Link>
+
+        {/* MillionDAY */}
+        <Link
+          to="/millionday"
+          className="group relative rounded-2xl p-6 sm:p-8 border transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl"
+          style={{
+            background: 'linear-gradient(135deg, hsl(210 100% 50% / 0.1), hsl(45 100% 51% / 0.08))',
+            borderColor: 'hsl(210 100% 50% / 0.3)',
+          }}
+        >
+          <div className="text-4xl sm:text-5xl mb-4">⭐</div>
+          <h2
+            className="text-xl sm:text-2xl font-bold mb-2"
+            style={{ color: 'hsl(45 100% 60%)' }}
+          >
+            MillionDAY
+          </h2>
+          <p className="text-sm" style={{ color: 'hsl(220 15% 60%)' }}>
+            Simulatore con estrazione Base ed Extra, 
+            calcolo combinatorio e probabilità su 55 numeri.
           </p>
           <div
             className="mt-4 inline-flex items-center text-sm font-semibold gap-1 transition-colors"
