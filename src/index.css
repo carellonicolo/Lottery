@@ -62,59 +62,6 @@
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
-  .dark {
-    --background: 220 20% 8%;
-    --foreground: 35 20% 88%;
-
-    --card: 220 18% 13%;
-    --card-foreground: 35 20% 88%;
-
-    --popover: 220 18% 13%;
-    --popover-foreground: 35 20% 88%;
-
-    --primary: 15 80% 55%;
-    --primary-foreground: 0 0% 100%;
-
-    --secondary: 25 30% 22%;
-    --secondary-foreground: 35 20% 88%;
-
-    --muted: 220 15% 18%;
-    --muted-foreground: 220 10% 60%;
-
-    --accent: 210 55% 50%;
-    --accent-foreground: 0 0% 100%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 220 12% 25%;
-    --input: 220 12% 25%;
-    --ring: 15 80% 55%;
-
-    --lotto-orange: 15 80% 55%;
-    --lotto-peach: 25 25% 20%;
-    --lotto-salmon: 15 45% 50%;
-    --lotto-gold: 45 70% 50%;
-    --lotto-blue: 210 55% 55%;
-    --lotto-green: 145 50% 40%;
-    --lotto-cream: 220 15% 16%;
-    --lotto-red: 0 65% 50%;
-
-    --glass-bg: 220 18% 14% / 0.7;
-    --glass-border: 220 12% 30% / 0.4;
-
-    --surface: 220 18% 16%;
-    --surface-muted: 220 15% 14%;
-
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
 }
 
 @layer base {
@@ -251,23 +198,6 @@
     border: 1px solid hsl(var(--glass-border));
     border-radius: 10px;
     padding: 1rem;
-  }
-
-  /* ===== Dark mode overrides for inner sections ===== */
-  .dark .schedina-card {
-    box-shadow:
-      0 8px 32px hsl(0 0% 0% / 0.3),
-      0 2px 8px hsl(0 0% 0% / 0.2);
-  }
-
-  .dark .lotto-bubble:not(.selected):not(.matched) {
-    background: hsl(var(--surface));
-    color: hsl(var(--foreground));
-    border-color: hsl(var(--border));
-  }
-
-  .dark .lotto-bubble:hover:not(:disabled):not(.selected):not(.matched) {
-    background: hsl(var(--lotto-peach));
   }
 
   /* ===== SuperEnalotto Glass Card ===== */

@@ -41,15 +41,9 @@ const SchedinaColumn: React.FC<SchedinaColumnProps> = ({
     onChange({ ...column, numbers: pool.slice(0, 5).sort((a, b) => a - b) });
   };
 
-  const isComplete = column.numbers.length === 5;
-
-  // Build grid rows matching the real ticket:
-  // Row 0: 5 empty cells + numbers 1-5  (right half only)
-  // Row 1: 6-10 | 11-15
-  // Row 2: 16-20 | 21-25
-  // Row 3: 26-30 | 31-35
-  // Row 4: 36-40 | 41-45
-  // Row 5: 46-50 | 51-55
+  // Grid matches real MillionDAY ticket:
+  // Row 0: empty | empty | empty | empty | empty | 1 | 2 | 3 | 4 | 5
+  // Row 1-5: 6-10 | 11-15 ... 51-55
   const gridRows: (number | null)[][] = [
     [null, null, null, null, null, 1, 2, 3, 4, 5],
     [6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
@@ -61,139 +55,195 @@ const SchedinaColumn: React.FC<SchedinaColumnProps> = ({
 
   const renderCell = (num: number | null, rowIdx: number, colIdx: number) => {
     if (num === null) {
-      return <div key={`empty-${rowIdx}-${colIdx}`} className="w-full aspect-square" />;
+      return <div key={`empty-${rowIdx}-${colIdx}`} style={{ width: '100%', aspectRatio: '1' }} />;
     }
 
     const isSelected = column.numbers.includes(num);
     const isMatchedBase = matchedBase.includes(num);
     const isMatchedExtra = matchedExtra.includes(num);
+    const isLocked = column.numbers.length >= 5 && !isSelected;
 
-    let cellStyle: React.CSSProperties = {
-      width: '100%',
-      aspectRatio: '1',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      fontSize: '11px',
-      fontWeight: 700,
-      borderRadius: '3px',
-      border: '1px solid #a8d8ea',
-      cursor: disabled || (column.numbers.length >= 5 && !isSelected) ? 'not-allowed' : 'pointer',
-      transition: 'all 0.15s ease',
-      fontFamily: "'Arial', sans-serif",
-      background: '#ffffff',
-      color: '#1a3a5c',
-    };
+    let bg = '#ffffff';
+    let color = '#0e3a5c';
+    let border = '1px solid #5BB0CC';
+    let content: React.ReactNode = num;
+    let extra: React.CSSProperties = {};
 
     if (isMatchedBase) {
-      cellStyle = {
-        ...cellStyle,
-        background: 'linear-gradient(135deg, #FF8F00, #F57C00)',
-        color: '#fff',
-        border: '2px solid #E65100',
-        transform: 'scale(1.08)',
-        boxShadow: '0 2px 8px rgba(245,124,0,0.5)',
-        zIndex: 10,
-      };
+      bg = 'linear-gradient(135deg, #FF8F00, #E65100)';
+      color = '#ffffff';
+      border = '2px solid #BF360C';
+      extra = { boxShadow: '0 2px 8px rgba(230,81,0,0.6)', transform: 'scale(1.05)', zIndex: 10 };
     } else if (isMatchedExtra) {
-      cellStyle = {
-        ...cellStyle,
-        background: 'linear-gradient(135deg, #00BCD4, #0097A7)',
-        color: '#fff',
-        border: '2px solid #006064',
-        transform: 'scale(1.08)',
-        boxShadow: '0 2px 8px rgba(0,188,212,0.5)',
-        zIndex: 10,
-      };
+      bg = 'linear-gradient(135deg, #00BCD4, #00838F)';
+      color = '#ffffff';
+      border = '2px solid #004D5A';
+      extra = { boxShadow: '0 2px 8px rgba(0,131,143,0.6)', transform: 'scale(1.05)', zIndex: 10 };
     } else if (isSelected) {
-      cellStyle = {
-        ...cellStyle,
-        background: 'linear-gradient(135deg, #FFA726, #FB8C00)',
-        color: '#fff',
-        border: '2px solid #E65100',
-        boxShadow: '0 1px 4px rgba(245,124,0,0.3)',
-      };
+      // Real ticket style: pen X mark over the number (number still readable)
+      content = (
+        <span style={{ position: 'relative', display: 'inline-block', width: '100%', height: '100%' }}>
+          <span style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0e3a5c', fontWeight: 700 }}>
+            {num}
+          </span>
+          <svg
+            viewBox="0 0 24 24"
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }}
+          >
+            <path
+              d="M4 4 L20 20 M20 4 L4 20"
+              stroke="#0a1a2c"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              fill="none"
+              opacity="0.88"
+            />
+          </svg>
+        </span>
+      );
     }
 
     if (disabled && !isSelected && !isMatchedBase && !isMatchedExtra) {
-      cellStyle.opacity = 0.5;
-    } else if (column.numbers.length >= 5 && !isSelected && !disabled) {
-      cellStyle.opacity = 0.4;
+      extra = { ...extra, opacity: 0.55 };
+    } else if (isLocked && !disabled) {
+      extra = { ...extra, opacity: 0.45 };
     }
 
     return (
       <button
         key={num}
         onClick={() => toggleNumber(num)}
-        disabled={disabled || (column.numbers.length >= 5 && !isSelected)}
-        style={cellStyle}
+        disabled={disabled || isLocked}
+        aria-label={`Numero ${num}${isSelected ? ', selezionato' : ''}`}
+        aria-pressed={isSelected}
+        style={{
+          width: '100%',
+          aspectRatio: '1',
+          background: bg,
+          color,
+          border,
+          borderRadius: '2px',
+          fontSize: 'clamp(10px, 1.6vw, 14px)',
+          fontWeight: 800,
+          fontFamily: "'Arial Narrow', 'Arial', sans-serif",
+          cursor: disabled || isLocked ? 'not-allowed' : 'pointer',
+          transition: 'all 0.12s ease',
+          padding: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          position: 'relative',
+          ...extra,
+        }}
       >
-        {num}
+        {content}
       </button>
     );
   };
 
   return (
-    <div style={{
-      background: 'linear-gradient(180deg, #4FC3F7 0%, #81D4FA 40%, #B3E5FC 100%)',
-      borderRadius: '12px',
-      overflow: 'hidden',
-      border: '2px solid #29B6F6',
-      boxShadow: isComplete ? '0 4px 20px rgba(79,195,247,0.3)' : '0 2px 8px rgba(0,0,0,0.1)',
-      transition: 'all 0.3s ease',
-    }}>
-      {/* GIOCATA Header - Orange bar like real ticket */}
-      <div style={{
-        background: 'linear-gradient(135deg, #FF9800, #F57C00)',
-        padding: '8px 12px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-      }}>
-        <span style={{
+    <div
+      style={{
+        position: 'relative',
+        background: '#7FCFE3',
+        backgroundImage: `
+          repeating-linear-gradient(-45deg, rgba(255,255,255,0.18) 0 1px, transparent 1px 8px),
+          linear-gradient(180deg, #6FC7DE 0%, #87D4E6 100%)
+        `,
+        border: '2px solid #1F8FAA',
+        borderRadius: '10px',
+        boxShadow: '0 4px 14px rgba(0,0,0,0.18), inset 0 0 0 1px rgba(255,255,255,0.4)',
+        overflow: 'hidden',
+        fontFamily: "'Arial', sans-serif",
+      }}
+    >
+      {/* GIOCATA label - thin bar */}
+      <div
+        style={{
+          background: 'linear-gradient(180deg, #0098B8 0%, #006E85 100%)',
+          padding: '4px 10px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
           color: '#fff',
+          fontSize: '10px',
           fontWeight: 900,
-          fontSize: '13px',
           letterSpacing: '1px',
-          fontFamily: "'Arial Black', 'Arial', sans-serif",
           textTransform: 'uppercase',
-        }}>
-          GIOCATA {index + 1}
-        </span>
-        <span style={{
-          color: '#fff',
-          fontSize: '11px',
-          fontWeight: 600,
-          opacity: 0.9,
-        }}>
+          borderBottom: '1px solid #00566A',
+        }}
+      >
+        <span>GIOCATA {index + 1}</span>
+        <span style={{ fontSize: '9px', opacity: 0.95, fontWeight: 700 }}>
           {column.numbers.length}/5
         </span>
       </div>
 
-      {/* Numbers Grid */}
-      <div style={{ padding: '8px 10px 6px' }}>
-        <p style={{
-          color: '#1a3a5c',
-          fontSize: '9px',
-          fontWeight: 700,
-          textTransform: 'uppercase',
-          letterSpacing: '0.5px',
-          marginBottom: '6px',
-          textAlign: 'center',
-        }}>
-          Scegli 5 numeri
-        </p>
+      {/* Header band - "SCEGLI 5 NUMERI al costo di 1€" */}
+      <div
+        style={{
+          background: 'linear-gradient(180deg, #FFFFFF 0%, #E8F6FB 100%)',
+          padding: '6px 10px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          borderBottom: '1px solid rgba(31,143,170,0.4)',
+        }}
+      >
+        <div>
+          <div
+            style={{
+              fontSize: '11px',
+              fontWeight: 900,
+              color: '#0e3a5c',
+              letterSpacing: '0.5px',
+              lineHeight: 1,
+              fontFamily: "'Arial Black', 'Arial', sans-serif",
+            }}
+          >
+            SCEGLI 5 NUMERI
+          </div>
+          <div style={{ fontSize: '9px', color: '#0e3a5c', marginTop: '2px', fontWeight: 600 }}>
+            al costo di 1€
+          </div>
+        </div>
+        <button
+          onClick={handleRandom}
+          disabled={disabled}
+          style={{
+            background: 'linear-gradient(135deg, #FFC107, #FF9800)',
+            color: '#fff',
+            border: '1px solid #E65100',
+            borderRadius: '4px',
+            padding: '3px 8px',
+            fontSize: '9px',
+            fontWeight: 800,
+            cursor: disabled ? 'not-allowed' : 'pointer',
+            opacity: disabled ? 0.5 : 1,
+            letterSpacing: '0.3px',
+            textTransform: 'uppercase',
+            fontFamily: "'Arial Black', sans-serif",
+            textShadow: '0 1px 1px rgba(0,0,0,0.2)',
+          }}
+        >
+          ✦ Casuale
+        </button>
+      </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+      {/* Numbers Grid */}
+      <div style={{ padding: '8px 8px 6px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
           {gridRows.map((row, rowIdx) => (
-            <div key={rowIdx} style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(5, 1fr) 4px repeat(5, 1fr)',
-              gap: '2px',
-              alignItems: 'center',
-            }}>
+            <div
+              key={rowIdx}
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(5, 1fr) 6px repeat(5, 1fr)',
+                gap: '3px',
+                alignItems: 'center',
+              }}
+            >
               {row.slice(0, 5).map((num, colIdx) => renderCell(num, rowIdx, colIdx))}
-              {/* Visual separator between left and right halves */}
               <div />
               {row.slice(5).map((num, colIdx) => renderCell(num, rowIdx, colIdx + 5))}
             </div>
@@ -201,107 +251,140 @@ const SchedinaColumn: React.FC<SchedinaColumnProps> = ({
         </div>
       </div>
 
-      {/* Random Button */}
-      <div style={{ padding: '4px 10px 8px', textAlign: 'right' }}>
-        <button
-          onClick={handleRandom}
-          disabled={disabled}
+      {/* "NOVITÀ" / Extra MillionDay strip - matches the real ticket */}
+      <div
+        style={{
+          position: 'relative',
+          background: 'linear-gradient(180deg, #FFFFFF 0%, #E0F4FA 100%)',
+          borderTop: '1px dashed #1F8FAA',
+          padding: '8px 10px 10px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '8px',
+        }}
+      >
+        {/* NOVITÀ ribbon */}
+        <div
           style={{
-            background: 'linear-gradient(135deg, #FFB74D, #FF9800)',
-            color: '#fff',
-            border: '1px solid #F57C00',
-            borderRadius: '6px',
-            padding: '4px 10px',
-            fontSize: '9px',
-            fontWeight: 800,
-            cursor: disabled ? 'not-allowed' : 'pointer',
-            opacity: disabled ? 0.5 : 1,
-            letterSpacing: '0.3px',
+            position: 'absolute',
+            top: '-9px',
+            right: '10px',
+            background: 'linear-gradient(135deg, #FFD600, #FFAB00)',
+            color: '#BF360C',
+            fontSize: '8px',
+            fontWeight: 900,
+            padding: '2px 8px',
+            borderRadius: '3px',
+            letterSpacing: '0.5px',
+            border: '1px solid #FF6F00',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.15)',
             textTransform: 'uppercase',
-            fontFamily: "'Arial', sans-serif",
+            fontFamily: "'Arial Black', sans-serif",
           }}
         >
-          5 Numeri Casuali
+          NOVITÀ
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: 0 }}>
+          {/* Extra MillionDay logo */}
+          <div style={{ display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
+            <span
+              style={{
+                fontWeight: 900,
+                fontSize: '15px',
+                color: '#E65100',
+                fontFamily: "'Arial Black', sans-serif",
+                fontStyle: 'italic',
+                lineHeight: 1,
+                letterSpacing: '-0.5px',
+              }}
+            >
+              extra
+            </span>
+            <span
+              style={{
+                fontWeight: 700,
+                fontSize: '9px',
+                color: '#006E85',
+                letterSpacing: '0.3px',
+                lineHeight: 1.1,
+                marginTop: '1px',
+              }}
+            >
+              MillionDay
+            </span>
+          </div>
+
+          <div
+            style={{
+              fontSize: '9px',
+              color: '#0e3a5c',
+              lineHeight: 1.2,
+              fontWeight: 600,
+              flex: 1,
+              minWidth: 0,
+            }}
+          >
+            Barrando la casella giochi <strong>1€</strong> su EXTRA MillionDay
+          </div>
+        </div>
+
+        {/* Checkbox */}
+        <button
+          onClick={() => !disabled && onChange({ ...column, isExtra: !column.isExtra })}
+          disabled={disabled}
+          aria-label={`Aggiungi Extra MillionDay alla colonna ${index + 1}`}
+          aria-pressed={column.isExtra}
+          style={{
+            width: '26px',
+            height: '26px',
+            borderRadius: '3px',
+            border: '2px solid #006E85',
+            background: column.isExtra ? '#fff' : '#fff',
+            cursor: disabled ? 'not-allowed' : 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+            transition: 'all 0.15s ease',
+            position: 'relative',
+            padding: 0,
+          }}
+        >
+          {column.isExtra && (
+            <svg viewBox="0 0 24 24" width="22" height="22" style={{ pointerEvents: 'none' }}>
+              <path
+                d="M4 4 L20 20 M20 4 L4 20"
+                stroke="#1a1a1a"
+                strokeWidth="3.5"
+                strokeLinecap="round"
+                fill="none"
+              />
+            </svg>
+          )}
         </button>
       </div>
 
-      {/* Extra MillionDAY Section */}
-      <div style={{
-        background: 'linear-gradient(135deg, #E0F7FA, #B2EBF2)',
-        borderTop: '2px dashed #4DD0E1',
-        padding: '8px 12px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: '8px',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <button
-            onClick={() => !disabled && onChange({ ...column, isExtra: !column.isExtra })}
-            disabled={disabled}
-            style={{
-              width: '20px',
-              height: '20px',
-              borderRadius: '3px',
-              border: '2px solid #00838F',
-              background: column.isExtra ? '#00838F' : '#fff',
-              cursor: disabled ? 'not-allowed' : 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-              transition: 'all 0.2s ease',
-            }}
-          >
-            {column.isExtra && (
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <path d="M2 6L5 9L10 3" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            )}
-          </button>
-          <div>
-            <div style={{
-              display: 'flex',
-              alignItems: 'baseline',
-              gap: '4px',
-            }}>
-              <span style={{
-                fontWeight: 900,
-                fontSize: '14px',
-                color: '#FF6F00',
-                fontFamily: "'Arial Black', sans-serif",
-                fontStyle: 'italic',
-              }}>
-                extra
-              </span>
-              <span style={{
-                fontWeight: 700,
-                fontSize: '10px',
-                color: '#00838F',
-                letterSpacing: '0.5px',
-              }}>
-                MillionDay
-              </span>
-            </div>
-            <span style={{
-              fontSize: '8px',
-              color: '#00695C',
-              fontWeight: 600,
-            }}>
-              5 numeri estratti dai 50 rimanenti
-            </span>
-          </div>
-        </div>
-        
-        <div style={{
-          textAlign: 'right',
-          fontSize: '10px',
-          fontWeight: 700,
-          color: '#1a3a5c',
-          whiteSpace: 'nowrap',
-        }}>
+      {/* Bottom info: "5 NUMERI ESTRATTI DAI 50 RIMANENTI" */}
+      <div
+        style={{
+          background: 'linear-gradient(180deg, #0098B8 0%, #006E85 100%)',
+          padding: '4px 10px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          color: '#fff',
+          fontSize: '9px',
+          fontWeight: 800,
+          letterSpacing: '0.5px',
+          textTransform: 'uppercase',
+        }}
+      >
+        <span>5 NUMERI ESTRATTI DAI 50 RIMANENTI</span>
+        <span style={{ fontWeight: 900, fontFamily: "'Arial Black', sans-serif" }}>
           €{(1 + (column.isExtra ? 1 : 0)).toFixed(2)}
-        </div>
+        </span>
       </div>
     </div>
   );

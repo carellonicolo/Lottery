@@ -1,7 +1,7 @@
 import { RUOTE, type Ruota } from '@/lib/lotto/types';
 import type { RisultatoEstrazione } from '@/lib/lotto/types';
 import { cn } from '@/lib/utils';
-import { COLORI_RUOTE } from './SelettoreRuote';
+import { COLORI_RUOTE } from './colori-ruote';
 
 interface TabellaEstrazioneProps {
   estrazione: RisultatoEstrazione;

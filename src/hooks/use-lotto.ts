@@ -10,17 +10,21 @@ function loadStorico(): RisultatoGiocata[] {
   try {
     const raw = localStorage.getItem(STORICO_KEY);
     if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return parsed.map((r: any) => ({ ...r, timestamp: new Date(r.timestamp) }));
-  } catch { return []; }
+    const parsed = JSON.parse(raw) as RisultatoGiocata[];
+    return parsed.map((r) => ({ ...r, timestamp: new Date(r.timestamp) }));
+  } catch {
+    return [];
+  }
 }
 
 function loadStats(): StatisticheSessione {
   try {
     const raw = localStorage.getItem(STATS_KEY);
     if (!raw) return { totaleGiocate: 0, totaleSpeso: 0, totaleVinto: 0, vittorie: 0 };
-    return JSON.parse(raw);
-  } catch { return { totaleGiocate: 0, totaleSpeso: 0, totaleVinto: 0, vittorie: 0 }; }
+    return JSON.parse(raw) as StatisticheSessione;
+  } catch {
+    return { totaleGiocate: 0, totaleSpeso: 0, totaleVinto: 0, vittorie: 0 };
+  }
 }
 
 export function useLotto() {
@@ -34,10 +38,18 @@ export function useLotto() {
 
   // Persist storico & stats
   useEffect(() => {
-    try { localStorage.setItem(STORICO_KEY, JSON.stringify(storico)); } catch {}
+    try {
+      localStorage.setItem(STORICO_KEY, JSON.stringify(storico));
+    } catch {
+      // Ignore storage errors (es. quota piena, modalità privata)
+    }
   }, [storico]);
   useEffect(() => {
-    try { localStorage.setItem(STATS_KEY, JSON.stringify(statistiche)); } catch {}
+    try {
+      localStorage.setItem(STATS_KEY, JSON.stringify(statistiche));
+    } catch {
+      // Ignore storage errors (es. quota piena, modalità privata)
+    }
   }, [statistiche]);
 
   const toggleNumero = useCallback((n: number) => {
@@ -167,7 +179,9 @@ export function useLotto() {
     try {
       localStorage.removeItem(STORICO_KEY);
       localStorage.removeItem(STATS_KEY);
-    } catch {}
+    } catch {
+      // Ignore storage errors
+    }
   }, []);
 
   return {

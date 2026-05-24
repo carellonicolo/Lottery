@@ -10,6 +10,8 @@ interface SchedinaColumnProps {
   disabled?: boolean;
 }
 
+const NUMBERS = Array.from({ length: 20 }, (_, i) => i + 1);
+
 const SchedinaColumn: React.FC<SchedinaColumnProps> = ({
   index,
   column,
@@ -21,7 +23,7 @@ const SchedinaColumn: React.FC<SchedinaColumnProps> = ({
   const toggleNumber = (num: number) => {
     if (disabled) return;
     const isSelected = column.numbers.includes(num);
-    let newNumbers = [];
+    let newNumbers: number[];
     if (isSelected) {
       newNumbers = column.numbers.filter((n) => n !== num);
     } else {
@@ -36,135 +38,371 @@ const SchedinaColumn: React.FC<SchedinaColumnProps> = ({
     onChange({ ...column, numerone: column.numerone === num ? null : num });
   };
 
+  const handleRandom = () => {
+    if (disabled) return;
+    const pool = Array.from({ length: 20 }, (_, i) => i + 1);
+    for (let i = 0; i < 10; i++) {
+      const j = i + Math.floor(Math.random() * (20 - i));
+      [pool[i], pool[j]] = [pool[j], pool[i]];
+    }
+    const numbers = pool.slice(0, 10).sort((a, b) => a - b);
+    const numerone = Math.floor(Math.random() * 20) + 1;
+    onChange({ ...column, numbers, numerone });
+  };
+
   const isNumbersComplete = column.numbers.length === 10;
   const isComplete = isNumbersComplete && column.numerone !== null;
 
   return (
-    <div className={`p-3 sm:p-4 rounded-xl border transition-all ${
-      isComplete ? 'bg-background shadow-inner border-primary/40' : 'bg-background/50 border-border'
-    }`}>
-      {/* Header and Cost Selection */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-full bg-secondary text-secondary-foreground flex items-center justify-center text-xs font-bold">
-            {index + 1}
-          </div>
-          <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-            {column.numbers.length}/10 Num. + {column.numerone ? '1' : '0'}/1 Num.
+    <div
+      style={{
+        background: '#FFFFFF',
+        borderRadius: '10px',
+        border: '1.5px solid #007A3D',
+        boxShadow: '0 4px 14px rgba(0,0,0,0.15)',
+        overflow: 'hidden',
+        fontFamily: "'Arial', sans-serif",
+      }}
+    >
+      {/* === COLUMN HEADER === */}
+      <div
+        style={{
+          background: 'linear-gradient(180deg, #00A859 0%, #007A3D 100%)',
+          padding: '6px 12px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          borderBottom: '2px solid #FFD600',
+          color: '#fff',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span
+            style={{
+              background: '#FFD600',
+              color: '#007A3D',
+              padding: '2px 8px',
+              borderRadius: '12px',
+              fontSize: '10px',
+              fontWeight: 900,
+              letterSpacing: '0.5px',
+            }}
+          >
+            COLONNA {index + 1}
+          </span>
+          <span style={{ fontSize: '11px', fontWeight: 700, opacity: 0.95 }}>
+            {column.numbers.length}/10 + {column.numerone ? '1' : '0'}/1
           </span>
         </div>
-        
-        {/* Real-life like Bet Selector */}
-        <div className="flex bg-secondary/50 rounded-lg p-1 border border-border">
-          <button
-            onClick={() => !disabled && onChange({ ...column, bet: 1 })}
-            disabled={disabled}
-            className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${
-              column.bet === 1 
-                ? 'bg-background text-foreground shadow-sm border border-border/50' 
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
+
+        <button
+          onClick={handleRandom}
+          disabled={disabled}
+          style={{
+            background: '#fff',
+            color: '#007A3D',
+            border: '1px solid #FFD600',
+            borderRadius: '4px',
+            padding: '3px 9px',
+            fontSize: '10px',
+            fontWeight: 900,
+            cursor: disabled ? 'not-allowed' : 'pointer',
+            opacity: disabled ? 0.5 : 1,
+            textTransform: 'uppercase',
+            letterSpacing: '0.3px',
+            fontFamily: "'Arial', sans-serif",
+          }}
+        >
+          ✦ Quick Pick
+        </button>
+      </div>
+
+      {/* === MAIN NUMBERS SECTION === */}
+      <div
+        style={{
+          background: 'linear-gradient(180deg, #E8F5E9 0%, #C8E6C9 100%)',
+          padding: '10px 12px',
+          position: 'relative',
+        }}
+      >
+        <div
+          style={{
+            fontSize: '11px',
+            fontWeight: 900,
+            color: '#007A3D',
+            letterSpacing: '0.3px',
+            marginBottom: '8px',
+            textTransform: 'uppercase',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <span>► Scegli 10 numeri da 1 a 20</span>
+          <span
+            style={{
+              background: column.numbers.length === 10 ? '#E30613' : '#fff',
+              color: column.numbers.length === 10 ? '#fff' : '#007A3D',
+              border: '1.5px solid #007A3D',
+              borderRadius: '12px',
+              padding: '1px 8px',
+              fontSize: '10px',
+              fontWeight: 900,
+            }}
           >
-            1€
-          </button>
-          <button
-            onClick={() => !disabled && onChange({ ...column, bet: 2 })}
-            disabled={disabled}
-            className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${
-              column.bet === 2 
-                ? 'bg-background text-foreground shadow-sm border border-border/50' 
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            2€
-          </button>
+            {column.numbers.length}/10
+          </span>
+        </div>
+
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(5, 1fr)',
+            gap: '6px',
+          }}
+        >
+          {NUMBERS.map((num) => {
+            const isSelected = column.numbers.includes(num);
+            const isMatched = matchedNumbers.includes(num);
+            const isLocked = isNumbersComplete && !isSelected;
+
+            let bg = '#FFFFFF';
+            let color = '#00753F';
+            let border = '2px solid #00A859';
+            let extraStyle: React.CSSProperties = {};
+
+            if (isMatched) {
+              bg = 'linear-gradient(135deg, #FFD600, #FFA000)';
+              color = '#7B1FA2';
+              border = '2px solid #E30613';
+              extraStyle = {
+                boxShadow: '0 0 0 3px #fff, 0 4px 10px rgba(227,6,19,0.5)',
+                transform: 'scale(1.1)',
+                zIndex: 10,
+              };
+            } else if (isSelected) {
+              bg = 'linear-gradient(135deg, #FF1744, #C00018)';
+              color = '#fff';
+              border = '2px solid #8B0000';
+              extraStyle = {
+                boxShadow: '0 2px 6px rgba(192,0,24,0.45), inset 0 1px 0 rgba(255,255,255,0.2)',
+              };
+            }
+
+            if (disabled && !isSelected && !isMatched) {
+              extraStyle = { ...extraStyle, opacity: 0.55 };
+            } else if (isLocked && !disabled) {
+              extraStyle = { ...extraStyle, opacity: 0.45 };
+            }
+
+            return (
+              <button
+                key={`num-${num}`}
+                onClick={() => toggleNumber(num)}
+                disabled={disabled || isLocked}
+                aria-label={`Numero ${num}${isSelected ? ', selezionato' : ''}`}
+                aria-pressed={isSelected}
+                style={{
+                  width: '100%',
+                  aspectRatio: '1',
+                  borderRadius: '50%',
+                  background: bg,
+                  color,
+                  border,
+                  fontSize: 'clamp(13px, 2vw, 17px)',
+                  fontWeight: 900,
+                  fontFamily: "'Arial', sans-serif",
+                  cursor: disabled || isLocked ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.15s ease',
+                  padding: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  position: 'relative',
+                  ...extraStyle,
+                }}
+              >
+                {num}
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      <div className="flex flex-col gap-4">
-        {/* Pannello 10 Numeri (Verde) */}
-        <div className="bg-primary/5 rounded-xl border border-primary/20 p-3 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-16 h-16 bg-primary/10 rounded-bl-full -z-10" />
-          <h4 className="text-[10px] font-bold text-primary uppercase mb-2">Scegli 10 Numeri</h4>
-          <div className="grid grid-cols-5 gap-1.5">
-            {Array.from({ length: 20 }, (_, i) => i + 1).map((num) => {
-              const isSelected = column.numbers.includes(num);
-              const isMatched = matchedNumbers.includes(num);
-
-              let btnClass = "w-full aspect-square rounded-full flex items-center justify-center text-[11px] font-bold transition-all duration-200 border-2 ";
-
-              if (isMatched) {
-                btnClass += "bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/30 scale-110 z-10";
-              } else if (isSelected) {
-                btnClass += "bg-primary/20 text-primary border-primary/50";
-              } else {
-                btnClass += "bg-background text-muted-foreground border-border hover:border-primary/40 hover:text-foreground";
-              }
-
-              if (disabled && !isSelected && !isMatched) {
-                btnClass += " opacity-50 cursor-not-allowed";
-              } else if (isNumbersComplete && !isSelected && !disabled) {
-                btnClass += " opacity-40 cursor-not-allowed";
-              }
-
-              return (
-                <button
-                  key={`num-${num}`}
-                  onClick={() => toggleNumber(num)}
-                  disabled={disabled || (isNumbersComplete && !isSelected)}
-                  className={btnClass}
-                >
-                  {num}
-                </button>
-              );
-            })}
-          </div>
+      {/* === NUMERONE SECTION === */}
+      <div
+        style={{
+          background: 'linear-gradient(180deg, #FFFDE7 0%, #FFF59D 100%)',
+          padding: '10px 12px',
+          borderTop: '2px dashed #FFA000',
+        }}
+      >
+        <div
+          style={{
+            fontSize: '11px',
+            fontWeight: 900,
+            color: '#E65100',
+            letterSpacing: '0.3px',
+            marginBottom: '8px',
+            textTransform: 'uppercase',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <span>★ Scegli il NUMERONE</span>
+          <span
+            style={{
+              background: column.numerone ? '#E30613' : '#fff',
+              color: column.numerone ? '#fff' : '#E65100',
+              border: '1.5px solid #E65100',
+              borderRadius: '12px',
+              padding: '1px 8px',
+              fontSize: '10px',
+              fontWeight: 900,
+            }}
+          >
+            {column.numerone ? '1' : '0'}/1
+          </span>
         </div>
 
-        {/* Pannello Numerone (Rosso/Arancione) */}
-        <div className="bg-accent/5 rounded-xl border border-accent/20 p-3 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-16 h-16 bg-accent/10 rounded-bl-full -z-10" />
-          <h4 className="text-[10px] font-bold text-accent uppercase mb-2">Scegli il Numerone</h4>
-          <div className="grid grid-cols-5 gap-1.5">
-            {Array.from({ length: 20 }, (_, i) => i + 1).map((num) => {
-              const isSelected = column.numerone === num;
-              const isMatched = isSelected && numeroneMatch;
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(10, 1fr)',
+            gap: '4px',
+          }}
+        >
+          {NUMBERS.map((num) => {
+            const isSelected = column.numerone === num;
+            const isMatched = isSelected && numeroneMatch;
+            const isLocked = column.numerone !== null && !isSelected;
 
-              let btnClass = "w-full aspect-square rounded-full flex items-center justify-center text-[11px] font-bold transition-all duration-200 border-2 ";
+            let bg = '#FFFFFF';
+            let color = '#E65100';
+            let border = '2px solid #FFA000';
+            let extraStyle: React.CSSProperties = {};
 
-              if (isMatched) {
-                btnClass += "bg-accent text-accent-foreground border-accent shadow-lg shadow-accent/30 scale-110 z-10";
-              } else if (isSelected) {
-                btnClass += "bg-accent/20 text-accent border-accent/50";
-              } else {
-                btnClass += "bg-background text-muted-foreground border-border hover:border-accent/40 hover:text-foreground";
-              }
+            if (isMatched) {
+              bg = 'linear-gradient(135deg, #FFD600, #FF9100)';
+              color = '#7B1FA2';
+              border = '2px solid #E30613';
+              extraStyle = {
+                boxShadow: '0 0 0 3px #fff, 0 4px 10px rgba(227,6,19,0.6)',
+                transform: 'scale(1.15)',
+                zIndex: 10,
+              };
+            } else if (isSelected) {
+              bg = 'linear-gradient(135deg, #FFD600, #FFA000)';
+              color = '#8B0000';
+              border = '2px solid #E65100';
+              extraStyle = {
+                boxShadow: '0 2px 6px rgba(255,109,0,0.45), inset 0 1px 0 rgba(255,255,255,0.4)',
+                transform: 'scale(1.08)',
+              };
+            }
 
-              if (disabled && !isSelected && !isMatched) {
-                btnClass += " opacity-50 cursor-not-allowed";
-              } else if (column.numerone !== null && !isSelected && !disabled) {
-                btnClass += " opacity-40 cursor-not-allowed";
-              }
+            if (disabled && !isSelected && !isMatched) {
+              extraStyle = { ...extraStyle, opacity: 0.55 };
+            } else if (isLocked && !disabled) {
+              extraStyle = { ...extraStyle, opacity: 0.5 };
+            }
 
-              return (
-                <button
-                  key={`numone-${num}`}
-                  onClick={() => toggleNumerone(num)}
-                  disabled={disabled || (column.numerone !== null && !isSelected)}
-                  className={btnClass}
-                >
-                  {num}
-                </button>
-              );
-            })}
-          </div>
+            return (
+              <button
+                key={`numone-${num}`}
+                onClick={() => toggleNumerone(num)}
+                disabled={disabled || isLocked}
+                aria-label={`Numerone ${num}${isSelected ? ', selezionato' : ''}`}
+                aria-pressed={isSelected}
+                style={{
+                  width: '100%',
+                  aspectRatio: '1',
+                  borderRadius: '50%',
+                  background: bg,
+                  color,
+                  border,
+                  fontSize: 'clamp(10px, 1.5vw, 13px)',
+                  fontWeight: 900,
+                  fontFamily: "'Arial', sans-serif",
+                  cursor: disabled || isLocked ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.15s ease',
+                  padding: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  ...extraStyle,
+                }}
+              >
+                {num}
+              </button>
+            );
+          })}
         </div>
       </div>
-      
-      {/* Footer Info */}
-      <div className="mt-4 text-[10px] sm:text-xs text-muted-foreground flex justify-between items-center bg-secondary/30 px-3 py-2 rounded-lg">
-        <span>Costo totale: <strong className="text-foreground">€{column.bet.toFixed(2)}</strong></span>
-        {isComplete && <span className="text-primary font-bold uppercase tracking-wider">Completa</span>}
+
+      {/* === BET / COST SECTION === */}
+      <div
+        style={{
+          background: 'linear-gradient(180deg, #007A3D 0%, #005C2E 100%)',
+          padding: '10px 12px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '10px',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span
+            style={{
+              color: '#FFD600',
+              fontWeight: 900,
+              fontSize: '10px',
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px',
+            }}
+          >
+            Scegli giocata:
+          </span>
+          <div style={{ display: 'flex', gap: '6px' }}>
+            {[1, 2].map((b) => (
+              <button
+                key={b}
+                onClick={() => !disabled && onChange({ ...column, bet: b as 1 | 2 })}
+                disabled={disabled}
+                aria-label={`Punta ${b} euro`}
+                aria-pressed={column.bet === b}
+                style={{
+                  background: column.bet === b ? '#FFD600' : 'transparent',
+                  color: column.bet === b ? '#005C2E' : '#fff',
+                  border: column.bet === b ? '2px solid #FFA000' : '2px solid #fff',
+                  borderRadius: '4px',
+                  padding: '4px 12px',
+                  fontSize: '12px',
+                  fontWeight: 900,
+                  cursor: disabled ? 'not-allowed' : 'pointer',
+                  opacity: disabled ? 0.5 : 1,
+                  transition: 'all 0.15s ease',
+                  fontFamily: "'Arial Black', sans-serif",
+                }}
+              >
+                {b}€
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div
+          style={{
+            color: isComplete ? '#FFD600' : '#fff',
+            fontWeight: 900,
+            fontSize: '13px',
+            fontFamily: "'Arial Black', sans-serif",
+            letterSpacing: '0.5px',
+          }}
+        >
+          {isComplete ? `€${column.bet.toFixed(2)}` : '— incompleta —'}
+        </div>
       </div>
     </div>
   );

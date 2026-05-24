@@ -1,8 +1,6 @@
 import React from 'react';
 import { type ColumnSelection } from '@/lib/millionday/millionday';
 import SchedinaColumn from './SchedinaColumn';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
 
 interface SchedinaProps {
   columns: ColumnSelection[];
@@ -28,11 +26,11 @@ const Schedina: React.FC<SchedinaProps> = ({
   };
 
   const handleClearAll = () => {
-    onColumnsChange(columns.map(c => ({ ...c, numbers: [] })));
+    onColumnsChange(columns.map((c) => ({ ...c, numbers: [] })));
   };
 
   const handleRandomAll = () => {
-    const next = columns.map(c => {
+    const next = columns.map((c) => {
       const numbers: number[] = [];
       const pool = Array.from({ length: 55 }, (_, i) => i + 1);
       for (let i = 0; i < 5; i++) {
@@ -54,80 +52,327 @@ const Schedina: React.FC<SchedinaProps> = ({
   }, 0);
 
   return (
-    <div className="glass-card glow-gold overflow-hidden">
-      <div className="bg-primary/20 border-b border-primary/20 px-4 py-3 sm:px-6 sm:py-4 flex flex-col sm:flex-row items-center justify-between gap-3">
-        <div className="flex items-center gap-3 w-full sm:w-auto">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-primary/20 flex items-center justify-center text-primary border border-primary/30 flex-shrink-0">
-            <span className="text-xl sm:text-2xl font-bold">5</span>
-          </div>
-          <div>
-            <h2 className="text-lg sm:text-xl font-bold text-primary">I Tuoi Numeri</h2>
-            <p className="text-xs sm:text-sm text-primary/80">Scegli 5 numeri da 1 a 55 per colonna</p>
-          </div>
-        </div>
-
-        <div className="flex w-full sm:w-auto justify-between sm:justify-end gap-2">
-          <button
-            onClick={handleRandomAll}
-            disabled={disabled}
-            className="flex-1 sm:flex-none text-xs px-3 py-2 rounded-lg font-semibold bg-secondary/80 border border-border hover:bg-secondary transition-colors"
-          >
-            Casuale Tutto
-          </button>
-          <button
-            onClick={handleClearAll}
-            disabled={disabled}
-            className="flex-1 sm:flex-none text-xs px-3 py-2 rounded-lg font-semibold bg-destructive/10 text-destructive border border-destructive/20 hover:bg-destructive/20 transition-colors"
-          >
-            Svuota Tutto
-          </button>
-        </div>
-      </div>
-
-      <div className="p-3 sm:p-5 grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-5">
-        {columns.map((col, idx) => (
-          <SchedinaColumn
-            key={idx}
-            index={idx}
-            column={col}
-            onChange={(newCol) => updateColumn(idx, newCol)}
-            matchedBase={matchedByColumnBase[idx] || []}
-            matchedExtra={matchedByColumnExtra[idx] || []}
-            disabled={disabled}
-          />
-        ))}
-      </div>
-
-      <div className="bg-secondary/40 border-t border-border px-4 py-4 sm:px-6 sm:py-5 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-start">
-          <div className="text-center sm:text-left">
-            <div className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-1">
-              Colonne
-            </div>
-            <div className="text-2xl font-bold font-mono">
-              {filledColumns.length}
-              <span className="text-muted-foreground text-lg">/4</span>
-            </div>
-          </div>
-          <div className="w-px h-10 bg-border hidden sm:block" />
-          <div className="text-center sm:text-left">
-            <div className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-1">
-              Costo
-            </div>
-            <div className="text-2xl font-bold font-mono text-primary">
-              €{totalCost.toFixed(2)}
-            </div>
-          </div>
-        </div>
-
-        <button
-          onClick={onPlay}
-          disabled={disabled || filledColumns.length === 0}
-          className="w-full sm:w-auto text-sm sm:text-base px-8 py-3 rounded-xl font-bold bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all transform active:scale-[0.98] shadow-lg shadow-primary/20"
+    <div className="flex flex-col items-center">
+      {/* === TICKET CONTAINER === */}
+      <div
+        className="w-full overflow-hidden"
+        style={{
+          background: '#7FCFE3',
+          backgroundImage: `
+            repeating-linear-gradient(-45deg, rgba(255,255,255,0.18) 0 1px, transparent 1px 10px),
+            linear-gradient(180deg, #6FC7DE 0%, #87D4E6 100%)
+          `,
+          borderRadius: '14px',
+          boxShadow:
+            '0 12px 40px rgba(0,0,0,0.28), 0 4px 12px rgba(0,0,0,0.18), inset 0 0 0 1px rgba(255,255,255,0.5)',
+          border: '2px solid #1F8FAA',
+          fontFamily: "'Arial', sans-serif",
+        }}
+      >
+        {/* === HEADER: MillionDAY Logo + Extra Logo === */}
+        <div
+          style={{
+            padding: '14px 16px 10px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '12px',
+            borderBottom: '2px solid rgba(31,143,170,0.4)',
+            position: 'relative',
+          }}
         >
-          {disabled ? 'Estrazione in corso...' : 'GIOCA ORA'}
-        </button>
+          {/* MillionDAY logo */}
+          <div style={{ display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: '2px',
+                lineHeight: 1,
+              }}
+            >
+              <span
+                style={{
+                  fontFamily: "'Arial Black', 'Arial', sans-serif",
+                  fontSize: 'clamp(22px, 4vw, 34px)',
+                  fontWeight: 900,
+                  fontStyle: 'italic',
+                  color: '#ffffff',
+                  textShadow: '1px 2px 0 #006E85, 2px 3px 6px rgba(0,0,0,0.2)',
+                  letterSpacing: '-1px',
+                }}
+              >
+                Million
+              </span>
+              <span
+                style={{
+                  fontFamily: "'Arial Black', 'Arial', sans-serif",
+                  fontSize: 'clamp(22px, 4vw, 34px)',
+                  fontWeight: 900,
+                  fontStyle: 'italic',
+                  color: '#FFD600',
+                  textShadow: '1px 2px 0 #BF360C, 2px 3px 6px rgba(0,0,0,0.25)',
+                  letterSpacing: '-1px',
+                }}
+              >
+                DAY
+              </span>
+            </div>
+            {/* Yellow underline curve */}
+            <div
+              style={{
+                marginTop: '2px',
+                height: '4px',
+                width: '95%',
+                background: 'linear-gradient(90deg, #FFD600 0%, #FF9800 60%, #FFD600 100%)',
+                borderRadius: '4px',
+                boxShadow: '0 1px 2px rgba(0,0,0,0.2)',
+              }}
+            />
+            <div
+              style={{
+                marginTop: '6px',
+                fontSize: 'clamp(10px, 1.3vw, 13px)',
+                fontWeight: 800,
+                color: '#ffffff',
+                letterSpacing: '1px',
+                textTransform: 'uppercase',
+                textShadow: '1px 1px 2px rgba(0,0,0,0.25)',
+              }}
+            >
+              Il milione che vorrei
+            </div>
+          </div>
+
+          {/* Extra MillionDay logo on the right */}
+          <div style={{ position: 'relative', flexShrink: 0 }}>
+            <div
+              style={{
+                position: 'absolute',
+                top: '-8px',
+                right: '-4px',
+                background: 'linear-gradient(135deg, #FFD600, #FFAB00)',
+                color: '#BF360C',
+                fontSize: '9px',
+                fontWeight: 900,
+                padding: '2px 8px',
+                borderRadius: '3px',
+                letterSpacing: '0.5px',
+                border: '1px solid #FF6F00',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                textTransform: 'uppercase',
+                fontFamily: "'Arial Black', sans-serif",
+                transform: 'rotate(6deg)',
+                zIndex: 2,
+              }}
+            >
+              NOVITÀ
+            </div>
+            <div
+              style={{
+                background: '#ffffff',
+                padding: '6px 12px',
+                borderRadius: '6px',
+                border: '1px solid rgba(0,0,0,0.1)',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'flex-start',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', lineHeight: 1 }}>
+                <span
+                  style={{
+                    fontWeight: 900,
+                    fontSize: 'clamp(16px, 2.5vw, 22px)',
+                    color: '#E65100',
+                    fontFamily: "'Arial Black', sans-serif",
+                    fontStyle: 'italic',
+                    letterSpacing: '-0.5px',
+                  }}
+                >
+                  extra
+                </span>
+                <span
+                  style={{
+                    fontWeight: 700,
+                    fontSize: 'clamp(10px, 1.4vw, 13px)',
+                    color: '#006E85',
+                    letterSpacing: '0.3px',
+                  }}
+                >
+                  MillionDay
+                </span>
+              </div>
+              <span
+                style={{
+                  fontSize: 'clamp(7px, 1vw, 9px)',
+                  color: '#006E85',
+                  fontWeight: 700,
+                  marginTop: '2px',
+                  letterSpacing: '0.3px',
+                  textTransform: 'uppercase',
+                }}
+              >
+                La seconda possibilità<br />per i tuoi numeri
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* === GLOBAL ACTIONS BAR === */}
+        <div
+          style={{
+            background: 'rgba(255,255,255,0.45)',
+            padding: '8px 12px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '8px',
+            borderBottom: '1px solid rgba(31,143,170,0.3)',
+          }}
+        >
+          <div style={{ fontSize: '11px', fontWeight: 800, color: '#0e3a5c', letterSpacing: '0.3px' }}>
+            {filledColumns.length}/4 GIOCATE COMPILATE
+          </div>
+          <div style={{ display: 'flex', gap: '6px' }}>
+            <button
+              onClick={handleRandomAll}
+              disabled={disabled}
+              style={{
+                background: 'linear-gradient(135deg, #FFC107, #FF9800)',
+                color: '#fff',
+                border: '1px solid #E65100',
+                borderRadius: '4px',
+                padding: '4px 10px',
+                fontSize: '10px',
+                fontWeight: 800,
+                cursor: disabled ? 'not-allowed' : 'pointer',
+                opacity: disabled ? 0.5 : 1,
+                textTransform: 'uppercase',
+                fontFamily: "'Arial Black', sans-serif",
+                letterSpacing: '0.3px',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.15)',
+              }}
+            >
+              ✦ Tutto Casuale
+            </button>
+            <button
+              onClick={handleClearAll}
+              disabled={disabled}
+              style={{
+                background: '#fff',
+                color: '#C62828',
+                border: '1px solid #C62828',
+                borderRadius: '4px',
+                padding: '4px 10px',
+                fontSize: '10px',
+                fontWeight: 800,
+                cursor: disabled ? 'not-allowed' : 'pointer',
+                opacity: disabled ? 0.5 : 1,
+                textTransform: 'uppercase',
+                fontFamily: "'Arial Black', sans-serif",
+                letterSpacing: '0.3px',
+              }}
+            >
+              ✕ Svuota
+            </button>
+          </div>
+        </div>
+
+        {/* === GIOCATE PANELS === */}
+        <div
+          className="grid grid-cols-1 md:grid-cols-2 gap-3 p-3"
+        >
+          {columns.map((col, idx) => (
+            <SchedinaColumn
+              key={idx}
+              index={idx}
+              column={col}
+              onChange={(newCol) => updateColumn(idx, newCol)}
+              matchedBase={matchedByColumnBase[idx] || []}
+              matchedExtra={matchedByColumnExtra[idx] || []}
+              disabled={disabled}
+            />
+          ))}
+        </div>
+
+        {/* === BOTTOM TICKET FOOTER === */}
+        <div
+          style={{
+            background: 'linear-gradient(180deg, #0098B8 0%, #006E85 100%)',
+            padding: '10px 14px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '10px',
+            borderTop: '2px solid #00566A',
+            flexWrap: 'wrap',
+          }}
+        >
+          <div
+            style={{
+              color: '#fff',
+              fontSize: '10px',
+              fontWeight: 700,
+              lineHeight: 1.3,
+              textTransform: 'uppercase',
+              letterSpacing: '0.4px',
+            }}
+          >
+            <div style={{ fontSize: '11px', fontWeight: 900, color: '#FFD600' }}>
+              ⏰ NUOVO ORARIO!
+            </div>
+            <div>Estrazione tutti i giorni alle 20:30</div>
+          </div>
+
+          <div
+            style={{
+              background: 'rgba(255,255,255,0.18)',
+              padding: '4px 10px',
+              borderRadius: '6px',
+              border: '1px solid rgba(255,255,255,0.3)',
+              color: '#fff',
+              fontWeight: 900,
+              fontSize: '13px',
+              fontFamily: "'Arial Black', sans-serif",
+              letterSpacing: '0.5px',
+            }}
+          >
+            TOTALE: <span style={{ color: '#FFD600' }}>€{totalCost.toFixed(2)}</span>
+          </div>
+        </div>
       </div>
+
+      {/* === GIOCA BUTTON (outside the ticket, like a separate action) === */}
+      <button
+        onClick={onPlay}
+        disabled={disabled || filledColumns.length === 0}
+        className="mt-5 transition-all hover:scale-105 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100"
+        style={{
+          padding: '14px 48px',
+          borderRadius: '12px',
+          background:
+            filledColumns.length > 0
+              ? 'linear-gradient(180deg, #FFC107 0%, #FF9800 50%, #E65100 100%)'
+              : '#999',
+          color: '#fff',
+          border: filledColumns.length > 0 ? '2px solid #BF360C' : '2px solid #777',
+          fontFamily: "'Arial Black', Impact, sans-serif",
+          fontSize: '18px',
+          fontWeight: 900,
+          letterSpacing: '2px',
+          textTransform: 'uppercase',
+          textShadow: '1px 2px 4px rgba(0,0,0,0.4)',
+          boxShadow:
+            filledColumns.length > 0
+              ? '0 6px 20px rgba(230,81,0,0.5), inset 0 1px 0 rgba(255,255,255,0.4)'
+              : 'none',
+          cursor: disabled || filledColumns.length === 0 ? 'not-allowed' : 'pointer',
+        }}
+      >
+        {disabled ? '⏳ Estrazione...' : '▶ GIOCA ORA'}
+      </button>
     </div>
   );
 };

@@ -113,7 +113,7 @@ const WinforlifeIndex: React.FC = () => {
               {
                 id: gameIdRef.current,
                 extraction: ext,
-                results: results as any,
+                results,
                 totalWon,
                 cost,
               },

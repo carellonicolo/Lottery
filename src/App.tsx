@@ -1,8 +1,6 @@
 import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
 import NotFound from "./pages/NotFound";
@@ -11,8 +9,6 @@ const LottoIndex = lazy(() => import("./pages/LottoIndex"));
 const SuperenalottoIndex = lazy(() => import("./pages/SuperenalottoIndex"));
 const MilliondayIndex = lazy(() => import("./pages/MilliondayIndex"));
 const WinforlifeIndex = lazy(() => import("./pages/WinforlifeIndex"));
-
-const queryClient = new QueryClient();
 
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center" style={{
@@ -26,24 +22,21 @@ const PageLoader = () => (
 );
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Suspense fallback={<PageLoader />}>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/giocodellotto" element={<LottoIndex />} />
-            <Route path="/superenalotto" element={<SuperenalottoIndex />} />
-            <Route path="/millionday" element={<MilliondayIndex />} />
-            <Route path="/winforlife" element={<WinforlifeIndex />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Suspense>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+  <TooltipProvider>
+    <Toaster />
+    <BrowserRouter>
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/giocodellotto" element={<LottoIndex />} />
+          <Route path="/superenalotto" element={<SuperenalottoIndex />} />
+          <Route path="/millionday" element={<MilliondayIndex />} />
+          <Route path="/winforlife" element={<WinforlifeIndex />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Suspense>
+    </BrowserRouter>
+  </TooltipProvider>
 );
 
 export default App;

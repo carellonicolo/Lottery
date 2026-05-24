@@ -9,7 +9,6 @@ import { SelettoreSorteImporti } from '@/components/lotto/SelettoreSorteImporti'
 import { TabellaEstrazione } from '@/components/lotto/TabellaEstrazione';
 import { RegoleLottoModal } from '@/components/lotto/RegoleLottoModal';
 import { GlobalDisclaimerModal } from '@/components/shared/GlobalDisclaimerModal';
-import { DarkModeToggle } from '@/components/lotto/DarkModeToggle';
 import { Button } from '@/components/ui/button';
 import { ShieldAlert, Landmark, Bot, Shuffle, Zap, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -55,7 +54,6 @@ const Index = () => {
           <h1 className="text-center text-xl sm:text-2xl font-bold uppercase tracking-widest text-white drop-shadow-[0_2px_8px_hsl(0_0%_0%/0.4)]">
             🎱 Simulatore del Gioco del Lotto
           </h1>
-          <DarkModeToggle />
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-[400px_1fr] gap-4 sm:gap-6">
 
@@ -261,7 +259,7 @@ const Index = () => {
                   />
                 ) : (
                   <TabellaEstrazione
-                    estrazione={{} as any}
+                    estrazione={{}}
                     numeriGiocati={[]}
                     ruoteGiocate={[]}
                   />
