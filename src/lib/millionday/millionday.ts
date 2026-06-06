@@ -1,4 +1,5 @@
 import { binomial, formatCurrency, formatNumber } from '@/lib/shared/math';
+import { drawUnique } from '@/lib/shared/random';
 
 export { binomial, formatCurrency, formatNumber };
 
@@ -68,14 +69,12 @@ export function calculateProbabilityBase(category: WinCategory): { probability: 
 export const calculateProbabilityExtra = calculateProbabilityBase;
 
 export function generateExtraction(): ExtractionResult {
-  const pool = Array.from({ length: 55 }, (_, i) => i + 1);
-  for (let i = 0; i < 10; i++) {
-    const j = i + Math.floor(Math.random() * (55 - i));
-    [pool[i], pool[j]] = [pool[j], pool[i]];
-  }
-  const baseNumbers = pool.slice(0, 5).sort((a, b) => a - b);
-  const extraNumbers = pool.slice(5, 10).sort((a, b) => a - b);
-  return { baseNumbers, extraNumbers };
+  // 10 estrazioni uniche: i primi 5 sono i base, i successivi 5 sono Extra (dai 50 rimanenti).
+  const drawn = drawUnique(55, 10);
+  return {
+    baseNumbers: drawn.slice(0, 5).sort((a, b) => a - b),
+    extraNumbers: drawn.slice(5, 10).sort((a, b) => a - b),
+  };
 }
 
 export function checkMatches(column: ColumnSelection, extraction: ExtractionResult, columnIndex = 0): MatchResult {

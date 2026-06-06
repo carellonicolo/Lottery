@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { type ColumnSelection, NUMBERS_TO_PICK, NUMBER_RANGE_MAX } from '@/lib/sivincetutto/sivincetutto';
 
 interface SchedinaColumnProps {
@@ -11,7 +11,7 @@ interface SchedinaColumnProps {
 
 const NUMBERS = Array.from({ length: NUMBER_RANGE_MAX }, (_, i) => i + 1);
 
-const SchedinaColumn: React.FC<SchedinaColumnProps> = ({
+const SchedinaColumnImpl: React.FC<SchedinaColumnProps> = ({
   index,
   column,
   onChange,

@@ -1,4 +1,7 @@
 import { binomial, formatCurrency, formatNumber } from '@/lib/shared/math';
+import { drawUniqueSorted, drawOne } from '@/lib/shared/random';
+
+export { binomial, formatCurrency, formatNumber };
 
 export interface ColumnSelection {
   numbers: number[]; // 10 numbers from 1-20
@@ -55,14 +58,11 @@ export function calculateProbability(matches: number, numeroneMatched: boolean):
 }
 
 export function generateExtraction(): ExtractionResult {
-  const pool = Array.from({ length: 20 }, (_, i) => i + 1);
-  for (let i = 0; i < 10; i++) {
-    const j = i + Math.floor(Math.random() * (20 - i));
-    [pool[i], pool[j]] = [pool[j], pool[i]];
-  }
-  const numbers = pool.slice(0, 10).sort((a, b) => a - b);
-  const numerone = Math.floor(Math.random() * 20) + 1;
-  return { numbers, numerone };
+  // 10 numeri estratti su 20 + 1 Numerone indipendente (può coincidere con i main).
+  return {
+    numbers: drawUniqueSorted(20, 10),
+    numerone: drawOne(20),
+  };
 }
 
 export function checkMatches(column: ColumnSelection, extraction: ExtractionResult, columnIndex = 0): MatchResult {

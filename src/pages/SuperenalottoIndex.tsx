@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useRef, lazy, Suspense } from 'react';
+import { useExtractionAnimation } from '@/hooks/use-extraction-animation';
 import {
   Dialog,
   DialogContent,
@@ -43,77 +44,63 @@ const normalizeColumns = (cols: ColumnSelection[]): ColumnSelection[] => {
 const SuperenalottoIndex: React.FC = () => {
   const [columns, setColumns] = useState<ColumnSelection[]>(() => normalizeColumns(Array.from({ length: PANEL_COUNT }, EMPTY_COL)));
   const [extraction, setExtraction] = useState<ExtractionResult | null>(null);
-  const [isAnimating, setIsAnimating] = useState(false);
-  const [revealedCount, setRevealedCount] = useState(0);
   const [matchedByColumn, setMatchedByColumn] = useState<number[][]>([]);
   const [gameHistory, setGameHistory] = useState<GameRecord[]>([]);
   const [lastResults, setLastResults] = useState<string | null>(null);
   const gameIdRef = useRef(0);
 
+  const { isAnimating, revealedCount, run: runAnimation } = useExtractionAnimation();
+
   const handlePlay = useCallback(() => {
+    if (isAnimating) return;
     const safeColumns = normalizeColumns(columns);
     const filledColumns = safeColumns.filter((c) => c.numbers.length === 6);
     if (filledColumns.length === 0) return;
 
-    setIsAnimating(true);
-    setRevealedCount(0);
     setMatchedByColumn([]);
     setLastResults(null);
-
     const ext = generateExtraction();
     setExtraction(ext);
 
-    let count = 0;
-    const interval = setInterval(() => {
-      count++;
-      setRevealedCount(count);
-      if (typeof navigator !== 'undefined' && navigator.vibrate) {
-        navigator.vibrate(30);
-      }
-      if (count >= 8) {
-        clearInterval(interval);
-        setTimeout(() => {
-          const results = safeColumns.map((col, idx) => {
-            if (col.numbers.length !== 6) return { columnIndex: idx, matched: [], jollyMatch: false, superstarMatch: false, category: null, prize: 0 };
-            return checkMatches(col, ext, idx);
+    // 8 step: 6 main + Jolly + SuperStar.
+    runAnimation({
+      totalSteps: 8,
+      intervalMs: 400,
+      finalDelayMs: 500,
+      onComplete: () => {
+        const results = safeColumns.map((col, idx) =>
+          col.numbers.length !== 6
+            ? { columnIndex: idx, matched: [], jollyMatch: false, superstarMatch: false, category: null, prize: 0, superstarPrize: 0 }
+            : checkMatches(col, ext, idx),
+        );
+
+        setMatchedByColumn(safeColumns.map((col) => (col.numbers.length !== 6 ? [] : col.numbers.filter((n) => ext.numbers.includes(n)))));
+
+        const totalWon = results.reduce((sum, r) => sum + r.prize, 0);
+        const cost = filledColumns.length;
+
+        const winMessages = results
+          .filter((r) => r.prize > 0)
+          .map((r) => {
+            const mainLabel = r.category ? `${r.category} (${formatCurrency(r.prize - r.superstarPrize)})` : '';
+            const ssLabel = r.superstarPrize > 0 ? ` +SS ${formatCurrency(r.superstarPrize)}` : '';
+            return `Colonna ${r.columnIndex + 1}: ${mainLabel}${ssLabel}`.trim();
           });
 
-          const matched = safeColumns.map((col) => {
-            if (col.numbers.length !== 6) return [];
-            return col.numbers.filter((n) => ext.numbers.includes(n));
-          });
-          setMatchedByColumn(matched);
+        setLastResults(
+          winMessages.length > 0
+            ? `🎉 ${winMessages.join(' | ')}`
+            : '😔 Nessuna vincita questa volta.',
+        );
 
-          const totalWon = results.reduce((sum, r) => sum + r.prize, 0);
-          const cost = filledColumns.length;
-
-          const winMessages = results
-            .filter((r) => r.category)
-            .map((r) => `Colonna ${r.columnIndex + 1}: ${r.category} (${formatCurrency(r.prize)})`);
-
-          setLastResults(
-            winMessages.length > 0
-              ? `🎉 ${winMessages.join(' | ')}`
-              : '😔 Nessuna vincita questa volta.'
-          );
-
-          gameIdRef.current++;
-          setGameHistory((prev) => [
-            ...prev,
-            {
-              id: gameIdRef.current,
-              extraction: ext,
-              results,
-              totalWon,
-              cost,
-            },
-          ]);
-
-          setIsAnimating(false);
-        }, 500);
-      }
-    }, 400);
-  }, [columns]);
+        gameIdRef.current++;
+        setGameHistory((prev) => [
+          ...prev,
+          { id: gameIdRef.current, extraction: ext, results, totalWon, cost },
+        ]);
+      },
+    });
+  }, [columns, isAnimating, runAnimation]);
 
   return (
     <div className="theme-superenalotto min-h-screen">

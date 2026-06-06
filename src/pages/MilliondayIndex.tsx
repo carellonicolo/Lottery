@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useRef, lazy, Suspense } from 'react';
+import { useExtractionAnimation } from '@/hooks/use-extraction-animation';
 import {
   Dialog,
   DialogContent,
@@ -46,23 +47,24 @@ const normalizeColumns = (cols: ColumnSelection[]): ColumnSelection[] => {
 const MilliondayIndex: React.FC = () => {
   const [columns, setColumns] = useState<ColumnSelection[]>(() => normalizeColumns(Array.from({ length: PANEL_COUNT }, EMPTY_COL)));
   const [extraction, setExtraction] = useState<ExtractionResult | null>(null);
-  const [isAnimating, setIsAnimating] = useState(false);
   const [revealedBaseCount, setRevealedBaseCount] = useState(0);
   const [revealedExtraCount, setRevealedExtraCount] = useState(0);
-  
+
   const [matchedByColumnBase, setMatchedByColumnBase] = useState<number[][]>([]);
   const [matchedByColumnExtra, setMatchedByColumnExtra] = useState<number[][]>([]);
-  
+
   const [gameHistory, setGameHistory] = useState<GameRecord[]>([]);
   const [lastResults, setLastResults] = useState<string | null>(null);
   const gameIdRef = useRef(0);
 
+  const { isAnimating, run: runAnimation } = useExtractionAnimation();
+
   const handlePlay = useCallback(() => {
+    if (isAnimating) return; // evita doppio click
     const safeColumns = normalizeColumns(columns);
     const filledColumns = safeColumns.filter((c) => c.numbers.length === 5);
     if (filledColumns.length === 0) return;
 
-    setIsAnimating(true);
     setRevealedBaseCount(0);
     setRevealedExtraCount(0);
     setMatchedByColumnBase([]);
@@ -72,72 +74,51 @@ const MilliondayIndex: React.FC = () => {
     const ext = generateExtraction();
     setExtraction(ext);
 
-    let baseCount = 0;
-    const baseInterval = setInterval(() => {
-      baseCount++;
-      setRevealedBaseCount(baseCount);
-      if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(30);
-      
-      if (baseCount >= 5) {
-        clearInterval(baseInterval);
-        
-        let extraCount = 0;
-        const extraInterval = setInterval(() => {
-          extraCount++;
-          setRevealedExtraCount(extraCount);
-          if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(30);
-          
-          if (extraCount >= 5) {
-            clearInterval(extraInterval);
-            
-            setTimeout(() => {
-              const results = safeColumns.map((col, idx) => {
-                if (col.numbers.length !== 5) {
-                  return { columnIndex: idx, matchedBase: [], matchedExtra: [], categoryBase: null, categoryExtra: null, prizeBase: 0, prizeExtra: 0, totalPrize: 0 };
-                }
-                return checkMatches(col, ext, idx);
-              });
+    // 10 step totali: i primi 5 svelano i numeri Base, gli ultimi 5 quelli Extra.
+    runAnimation({
+      totalSteps: 10,
+      intervalMs: 400,
+      finalDelayMs: 500,
+      onTick: (step) => {
+        if (step <= 5) setRevealedBaseCount(step);
+        else setRevealedExtraCount(step - 5);
+      },
+      onComplete: () => {
+        const results = safeColumns.map((col, idx) =>
+          col.numbers.length !== 5
+            ? { columnIndex: idx, matchedBase: [], matchedExtra: [], categoryBase: null, categoryExtra: null, prizeBase: 0, prizeExtra: 0, totalPrize: 0 }
+            : checkMatches(col, ext, idx),
+        );
 
-              setMatchedByColumnBase(results.map(r => r.matchedBase));
-              setMatchedByColumnExtra(results.map(r => r.matchedExtra));
+        setMatchedByColumnBase(results.map((r) => r.matchedBase));
+        setMatchedByColumnExtra(results.map((r) => r.matchedExtra));
 
-              const totalWon = results.reduce((sum, r) => sum + r.totalPrize, 0);
-              const cost = filledColumns.reduce((sum, col) => sum + 1 + (col.isExtra ? 1 : 0), 0);
+        const totalWon = results.reduce((sum, r) => sum + r.totalPrize, 0);
+        const cost = filledColumns.reduce((sum, col) => sum + 1 + (col.isExtra ? 1 : 0), 0);
 
-              const winMessages = results
-                .filter((r) => r.totalPrize > 0)
-                .map((r) => {
-                  let msg = `Colonna ${r.columnIndex + 1}:`;
-                  if (r.categoryBase) msg += ` Base ${r.categoryBase} (${formatCurrency(r.prizeBase)})`;
-                  if (r.categoryExtra) msg += ` Extra ${r.categoryExtra} (${formatCurrency(r.prizeExtra)})`;
-                  return msg;
-                });
+        const winMessages = results
+          .filter((r) => r.totalPrize > 0)
+          .map((r) => {
+            let msg = `Colonna ${r.columnIndex + 1}:`;
+            if (r.categoryBase) msg += ` Base ${r.categoryBase} (${formatCurrency(r.prizeBase)})`;
+            if (r.categoryExtra) msg += ` Extra ${r.categoryExtra} (${formatCurrency(r.prizeExtra)})`;
+            return msg;
+          });
 
-              setLastResults(
-                winMessages.length > 0
-                  ? `🎉 ${winMessages.join(' | ')}`
-                  : '😔 Nessuna vincita questa volta.'
-              );
+        setLastResults(
+          winMessages.length > 0
+            ? `🎉 ${winMessages.join(' | ')}`
+            : '😔 Nessuna vincita questa volta.',
+        );
 
-              gameIdRef.current++;
-              setGameHistory((prev) => [
-                ...prev,
-                {
-                  id: gameIdRef.current,
-                  extraction: ext,
-                  results,
-                  totalWon,
-                  cost,
-                },
-              ]);
-
-              setIsAnimating(false);
-            }, 500);
-          }
-        }, 400); // Extra numbers animation interval
-      }
-    }, 400); // Base numbers animation interval
-  }, [columns]);
+        gameIdRef.current++;
+        setGameHistory((prev) => [
+          ...prev,
+          { id: gameIdRef.current, extraction: ext, results, totalWon, cost },
+        ]);
+      },
+    });
+  }, [columns, isAnimating, runAnimation]);
 
   return (
     <div className="theme-millionday min-h-screen">

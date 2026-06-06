@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { type ColumnSelection } from '@/lib/millionday/millionday';
 
 interface SchedinaColumnProps {
@@ -10,7 +10,19 @@ interface SchedinaColumnProps {
   disabled?: boolean;
 }
 
-const SchedinaColumn: React.FC<SchedinaColumnProps> = ({
+// Grid del Lotto MillionDAY: la prima riga ha solo i numeri 1-5 sulla destra,
+// il resto è impaginato come una vera schedina (5 numeri + gap + 5 numeri).
+// Estratto FUORI dal componente per non rialloccarlo ad ogni render.
+const GRID_ROWS: ReadonlyArray<ReadonlyArray<number | null>> = [
+  [null, null, null, null, null, 1, 2, 3, 4, 5],
+  [6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+  [16, 17, 18, 19, 20, 21, 22, 23, 24, 25],
+  [26, 27, 28, 29, 30, 31, 32, 33, 34, 35],
+  [36, 37, 38, 39, 40, 41, 42, 43, 44, 45],
+  [46, 47, 48, 49, 50, 51, 52, 53, 54, 55],
+];
+
+const SchedinaColumnImpl: React.FC<SchedinaColumnProps> = ({
   index,
   column,
   onChange,
@@ -40,18 +52,6 @@ const SchedinaColumn: React.FC<SchedinaColumnProps> = ({
     }
     onChange({ ...column, numbers: pool.slice(0, 5).sort((a, b) => a - b) });
   };
-
-  // Grid matches real MillionDAY ticket:
-  // Row 0: empty | empty | empty | empty | empty | 1 | 2 | 3 | 4 | 5
-  // Row 1-5: 6-10 | 11-15 ... 51-55
-  const gridRows: (number | null)[][] = [
-    [null, null, null, null, null, 1, 2, 3, 4, 5],
-    [6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
-    [16, 17, 18, 19, 20, 21, 22, 23, 24, 25],
-    [26, 27, 28, 29, 30, 31, 32, 33, 34, 35],
-    [36, 37, 38, 39, 40, 41, 42, 43, 44, 45],
-    [46, 47, 48, 49, 50, 51, 52, 53, 54, 55],
-  ];
 
   const renderCell = (num: number | null, rowIdx: number, colIdx: number) => {
     if (num === null) {
@@ -233,7 +233,7 @@ const SchedinaColumn: React.FC<SchedinaColumnProps> = ({
       {/* Numbers Grid */}
       <div style={{ padding: '8px 8px 6px' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-          {gridRows.map((row, rowIdx) => (
+          {GRID_ROWS.map((row, rowIdx) => (
             <div
               key={rowIdx}
               style={{
@@ -390,4 +390,9 @@ const SchedinaColumn: React.FC<SchedinaColumnProps> = ({
   );
 };
 
+/**
+ * Memoizzato: 110 bottoni di griglia significano re-render costosi quando il parent
+ * cambia stato per un'altra colonna. Confronto shallow su props basta.
+ */
+const SchedinaColumn = memo(SchedinaColumnImpl);
 export default SchedinaColumn;

@@ -1,4 +1,5 @@
 import { binomial, formatCurrency, formatNumber } from '@/lib/shared/math';
+import { drawUniqueSorted } from '@/lib/shared/random';
 
 export { binomial, formatCurrency, formatNumber };
 
@@ -59,12 +60,7 @@ export function calculateWinProbability(): { probability: number; oneIn: number 
 }
 
 export function generateExtraction(): ExtractionResult {
-  const pool = Array.from({ length: NUMBER_RANGE_MAX }, (_, i) => i + 1);
-  for (let i = 0; i < NUMBERS_DRAWN; i++) {
-    const j = i + Math.floor(Math.random() * (NUMBER_RANGE_MAX - i));
-    [pool[i], pool[j]] = [pool[j], pool[i]];
-  }
-  return { numbers: pool.slice(0, NUMBERS_DRAWN).sort((a, b) => a - b) };
+  return { numbers: drawUniqueSorted(NUMBER_RANGE_MAX, NUMBERS_DRAWN) };
 }
 
 export function checkMatches(column: ColumnSelection, extraction: ExtractionResult, columnIndex = 0): MatchResult {

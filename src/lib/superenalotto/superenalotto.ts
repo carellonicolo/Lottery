@@ -1,5 +1,6 @@
 // SuperEnalotto game logic and probability calculations
 import { binomial, factorial, formatCurrency, formatNumber } from '@/lib/shared/math';
+import { drawUniqueSorted, drawOne } from '@/lib/shared/random';
 
 // Re-export shared utils for consumers
 export { binomial, factorial, formatCurrency, formatNumber };
@@ -22,6 +23,8 @@ export interface MatchResult {
   superstarMatch: boolean;
   category: WinCategory | null;
   prize: number;
+  /** Premio extra per SuperStar (incluso in `prize`). Esposto per UI. */
+  superstarPrize: number;
 }
 
 export type WinCategory = '6' | '5+1' | '5' | '4' | '3' | '2';
@@ -46,7 +49,26 @@ export const AVERAGE_PRIZES: Record<WinCategory, number> = {
   '2': 5,
 };
 
-export const TICKET_COST = 1; // €1 per column
+/**
+ * Premi SuperStar per categoria. Conforme al regolamento Sisal vigente:
+ * la SuperStar costa €0,50 in più per colonna e, se centrata, MOLTIPLICA il premio.
+ * Per semplicità qui sommiamo un importo extra fisso indicativo.
+ *
+ * Cat. 6+SS è virtualmente irrealizzabile (jackpot già max); le altre seguono
+ * approssimativamente le quote storiche dichiarate da Sisal.
+ */
+export const SUPERSTAR_PRIZES: Record<WinCategory | 'none', number> = {
+  '6': 0, // jackpot già ai limiti; SS irrilevante in pratica
+  '5+1': 1_000_000,
+  '5': 25_000,
+  '4': 25_000,
+  '3': 3_000,
+  '2': 100,
+  none: 5, // solo SuperStar (nessun match principale)
+};
+
+export const TICKET_COST = 1; // €1 per colonna base
+export const SUPERSTAR_COST = 0.5; // +€0,50 se attivata
 
 // Calculate probability for each win category
 export function calculateProbability(category: WinCategory): { probability: number; oneIn: number } {
@@ -93,27 +115,21 @@ export function calculateProbability(category: WinCategory): { probability: numb
   }
 }
 
-// Generate a random extraction
-// Fisher-Yates shuffle for O(1) per pick (optimized for Monte Carlo)
+// Generate a random extraction.
+// Fisher-Yates parziale: 6 main + Jolly dai restanti 84, SuperStar indipendente da 1-90.
 export function generateExtraction(): ExtractionResult {
-  const pool = Array.from({ length: 90 }, (_, i) => i + 1);
-
-  // Fisher-Yates: shuffle first 7 positions (6 main + 1 jolly)
-  for (let i = 0; i < 7; i++) {
-    const j = i + Math.floor(Math.random() * (90 - i));
-    [pool[i], pool[j]] = [pool[j], pool[i]];
-  }
-
-  const numbers = pool.slice(0, 6).sort((a, b) => a - b);
-  const jolly = pool[6];
-  const superstar = Math.floor(Math.random() * 90) + 1;
-
-  return { numbers, jolly, superstar };
+  const drawn = drawUniqueSorted(90, 7); // 6 main + 1 jolly tutti distinti
+  return {
+    numbers: drawn.slice(0, 6).sort((a, b) => a - b),
+    jolly: drawn[6],
+    superstar: drawOne(90),
+  };
 }
 
 // Check matches for a column
 export function checkMatches(column: ColumnSelection, extraction: ExtractionResult, columnIndex = 0): MatchResult {
-  const matched = column.numbers.filter(n => extraction.numbers.includes(n));
+  const mainSet = new Set(extraction.numbers);
+  const matched = column.numbers.filter((n) => mainSet.has(n));
   const jollyMatch = column.numbers.includes(extraction.jolly);
   const superstarMatch = column.superstar != null && column.superstar === extraction.superstar;
 
@@ -125,9 +141,14 @@ export function checkMatches(column: ColumnSelection, extraction: ExtractionResu
   else if (matched.length === 3) category = '3';
   else if (matched.length === 2) category = '2';
 
-  const prize = category ? AVERAGE_PRIZES[category] : 0;
+  const basePrize = category ? AVERAGE_PRIZES[category] : 0;
+  // Premio SuperStar: somma fissa per categoria, oppure premio "consolation" se nessun match principale.
+  let superstarPrize = 0;
+  if (superstarMatch) {
+    superstarPrize = category ? SUPERSTAR_PRIZES[category] : SUPERSTAR_PRIZES.none;
+  }
 
-  return { columnIndex, matched, jollyMatch, superstarMatch, category, prize };
+  return { columnIndex, matched, jollyMatch, superstarMatch, category, prize: basePrize + superstarPrize, superstarPrize };
 }
 
 // Run fast simulation
@@ -140,18 +161,20 @@ export interface SimulationResult {
 
 export function runSimulation(columns: ColumnSelection[], numExtractions: number): SimulationResult {
   const winsByCategory: Record<WinCategory, number> = {
-    '6': 0, '5+1': 0, '5': 0, '4': 0, '3': 0, '2': 0
+    '6': 0, '5+1': 0, '5': 0, '4': 0, '3': 0, '2': 0,
   };
   let totalWon = 0;
-  const totalSpent = numExtractions * columns.length * TICKET_COST;
+  const ssCols = columns.filter((c) => c.superstar != null).length;
+  const totalSpent = numExtractions * (columns.length * TICKET_COST + ssCols * SUPERSTAR_COST);
 
   for (let i = 0; i < numExtractions; i++) {
     const extraction = generateExtraction();
     const numSet = new Set(extraction.numbers);
     for (const col of columns) {
-      const matched = col.numbers.filter(n => numSet.has(n));
+      let matchCount = 0;
+      for (const n of col.numbers) if (numSet.has(n)) matchCount++;
       const jollyMatch = col.numbers.includes(extraction.jolly);
-      const matchCount = matched.length;
+      const ssMatch = col.superstar != null && col.superstar === extraction.superstar;
 
       let category: WinCategory | null = null;
       if (matchCount === 6) category = '6';
@@ -164,6 +187,9 @@ export function runSimulation(columns: ColumnSelection[], numExtractions: number
       if (category) {
         winsByCategory[category]++;
         totalWon += AVERAGE_PRIZES[category];
+      }
+      if (ssMatch) {
+        totalWon += category ? SUPERSTAR_PRIZES[category] : SUPERSTAR_PRIZES.none;
       }
     }
   }

@@ -1,20 +1,15 @@
 import type { Giocata, RisultatoEstrazione, RisultatoGiocata, Ruota, TipoGiocata, VincitaDettaglio } from './types';
 import { binomial } from '@/lib/shared/math';
+import { drawUniqueSorted } from '@/lib/shared/random';
 
 // Re-export binomial as combinazioni for backward compatibility
 export const combinazioni = binomial;
 
-// Estrae 5 numeri casuali da 1 a 90 senza ripetizioni per ogni ruota
+// Estrae 5 numeri casuali da 1 a 90 senza ripetizioni per ogni ruota (Fisher-Yates O(5)).
 export function eseguiEstrazione(ruote: readonly Ruota[]): RisultatoEstrazione {
   const risultato: RisultatoEstrazione = {};
   for (const ruota of ruote) {
-    const numeri: number[] = [];
-    while (numeri.length < 5) {
-      const n = Math.floor(Math.random() * 90) + 1;
-      if (!numeri.includes(n)) numeri.push(n);
-    }
-    numeri.sort((a, b) => a - b);
-    risultato[ruota] = numeri;
+    risultato[ruota] = drawUniqueSorted(90, 5);
   }
   return risultato;
 }

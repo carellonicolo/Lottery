@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useRef, lazy, Suspense } from 'react';
+import { useExtractionAnimation } from '@/hooks/use-extraction-animation';
 import {
   Dialog,
   DialogContent,
@@ -47,85 +48,67 @@ const normalizeColumns = (cols: ColumnSelection[]): ColumnSelection[] => {
 const WinforlifeIndex: React.FC = () => {
   const [columns, setColumns] = useState<ColumnSelection[]>(() => normalizeColumns(Array.from({ length: PANEL_COUNT }, EMPTY_COL)));
   const [extraction, setExtraction] = useState<ExtractionResult | null>(null);
-  const [isAnimating, setIsAnimating] = useState(false);
-  const [revealedCount, setRevealedCount] = useState(0);
   const [numeroneRevealed, setNumeroneRevealed] = useState(false);
-  
-  const [matchedByColumn, setMatchedByColumn] = useState<{ matchedNumbers: number[], numeroneMatch: boolean }[]>([]);
-  
+  const [matchedByColumn, setMatchedByColumn] = useState<{ matchedNumbers: number[]; numeroneMatch: boolean }[]>([]);
   const [gameHistory, setGameHistory] = useState<GameRecord[]>([]);
   const [lastResults, setLastResults] = useState<string | null>(null);
   const gameIdRef = useRef(0);
 
+  // 11 step totali: 10 numeri principali + 1 Numerone con leggera pausa drammatica.
+  const { isAnimating, revealedCount, run: runAnimation } = useExtractionAnimation();
+
   const handlePlay = useCallback(() => {
+    if (isAnimating) return;
     const safeColumns = normalizeColumns(columns);
     const filledColumns = safeColumns.filter((c) => c.numbers.length === 10 && c.numerone !== null);
     if (filledColumns.length === 0) return;
 
-    setIsAnimating(true);
-    setRevealedCount(0);
     setNumeroneRevealed(false);
     setMatchedByColumn([]);
     setLastResults(null);
-
     const ext = generateExtraction();
     setExtraction(ext);
 
-    let count = 0;
-    const interval = setInterval(() => {
-      count++;
-      setRevealedCount(count);
-      if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(30);
-      
-      if (count >= 10) {
-        clearInterval(interval);
-        
-        // Suspense per il Numerone
-        setTimeout(() => {
+    runAnimation({
+      totalSteps: 11,
+      intervalMs: 250,
+      finalDelayMs: 600,
+      onTick: (step) => {
+        if (step === 11) {
           setNumeroneRevealed(true);
           if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate([100, 50, 100]);
-          
-          setTimeout(() => {
-            const results = safeColumns.map((col, idx) => {
-              if (col.numbers.length !== 10 || col.numerone === null) {
-                return { columnIndex: idx, matchedNumbers: [], numeroneMatch: false, category: null, prize: 0 };
-              }
-              return checkMatches(col, ext, idx);
-            });
+        }
+      },
+      onComplete: () => {
+        const results = safeColumns.map((col, idx) =>
+          col.numbers.length !== 10 || col.numerone === null
+            ? { columnIndex: idx, matchedNumbers: [], numeroneMatch: false, category: null, prize: 0 }
+            : checkMatches(col, ext, idx),
+        );
 
-            setMatchedByColumn(results.map(r => ({ matchedNumbers: r.matchedNumbers, numeroneMatch: r.numeroneMatch })));
+        setMatchedByColumn(results.map((r) => ({ matchedNumbers: r.matchedNumbers, numeroneMatch: r.numeroneMatch })));
 
-            const totalWon = results.reduce((sum, r) => sum + r.prize, 0);
-            const cost = filledColumns.reduce((sum, col) => sum + col.bet, 0);
+        const totalWon = results.reduce((sum, r) => sum + r.prize, 0);
+        const cost = filledColumns.reduce((sum, col) => sum + col.bet, 0);
 
-            const winMessages = results
-              .filter((r) => r.prize > 0)
-              .map((r) => `Colonna ${r.columnIndex + 1}: Punteggio ${r.category} (${formatCurrency(r.prize)})`);
+        const winMessages = results
+          .filter((r) => r.prize > 0)
+          .map((r) => `Colonna ${r.columnIndex + 1}: Punteggio ${r.category} (${formatCurrency(r.prize)})`);
 
-            setLastResults(
-              winMessages.length > 0
-                ? `🎉 ${winMessages.join(' | ')}`
-                : '😔 Nessuna vincita questa volta.'
-            );
+        setLastResults(
+          winMessages.length > 0
+            ? `🎉 ${winMessages.join(' | ')}`
+            : '😔 Nessuna vincita questa volta.',
+        );
 
-            gameIdRef.current++;
-            setGameHistory((prev) => [
-              ...prev,
-              {
-                id: gameIdRef.current,
-                extraction: ext,
-                results,
-                totalWon,
-                cost,
-              },
-            ]);
-
-            setIsAnimating(false);
-          }, 600);
-        }, 1000);
-      }
-    }, 250); // Faster animation for 10 numbers
-  }, [columns]);
+        gameIdRef.current++;
+        setGameHistory((prev) => [
+          ...prev,
+          { id: gameIdRef.current, extraction: ext, results, totalWon, cost },
+        ]);
+      },
+    });
+  }, [columns, isAnimating, runAnimation]);
 
   return (
     <div className="theme-winforlife min-h-screen">

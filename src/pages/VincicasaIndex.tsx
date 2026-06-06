@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useRef } from 'react';
+import { useExtractionAnimation } from '@/hooks/use-extraction-animation';
 import {
   Dialog,
   DialogContent,
@@ -53,77 +54,67 @@ const VincicasaIndex: React.FC = () => {
     normalizeColumns(Array.from({ length: PANEL_COUNT }, EMPTY_COL)),
   );
   const [extraction, setExtraction] = useState<ExtractionResult | null>(null);
-  const [isAnimating, setIsAnimating] = useState(false);
-  const [revealedCount, setRevealedCount] = useState(0);
   const [matchedByColumn, setMatchedByColumn] = useState<number[][]>([]);
   const [lastResults, setLastResults] = useState<string | null>(null);
   const [houseWon, setHouseWon] = useState(false);
   const [, setGameHistory] = useState<GameRecord[]>([]);
   const gameIdRef = useRef(0);
 
+  const { isAnimating, revealedCount, run: runAnimation } = useExtractionAnimation();
+
   const handlePlay = useCallback(() => {
+    if (isAnimating) return;
     const safe = normalizeColumns(columns);
     const filled = safe.filter((c) => c.numbers.length === NUMBERS_TO_PICK);
     if (filled.length === 0) return;
 
-    setIsAnimating(true);
-    setRevealedCount(0);
     setMatchedByColumn([]);
     setLastResults(null);
     setHouseWon(false);
-
     const ext = generateExtraction();
     setExtraction(ext);
 
-    let count = 0;
-    const interval = setInterval(() => {
-      count++;
-      setRevealedCount(count);
-      if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(30);
+    runAnimation({
+      totalSteps: NUMBERS_DRAWN,
+      intervalMs: 400,
+      finalDelayMs: 500,
+      onComplete: () => {
+        const results: MatchResult[] = safe.map((col, idx) =>
+          col.numbers.length !== NUMBERS_TO_PICK
+            ? { columnIndex: idx, matchedNumbers: [], category: null, prize: 0, isHouseWin: false }
+            : checkMatches(col, ext, idx),
+        );
 
-      if (count >= NUMBERS_DRAWN) {
-        clearInterval(interval);
-        setTimeout(() => {
-          const results: MatchResult[] = safe.map((col, idx) => {
-            if (col.numbers.length !== NUMBERS_TO_PICK) {
-              return { columnIndex: idx, matchedNumbers: [], category: null, prize: 0, isHouseWin: false };
-            }
-            return checkMatches(col, ext, idx);
+        setMatchedByColumn(results.map((r) => r.matchedNumbers));
+
+        const totalWon = results.reduce((sum, r) => sum + r.prize, 0);
+        const cost = filled.length * TICKET_COST;
+        const won5 = results.some((r) => r.isHouseWin);
+        setHouseWon(won5);
+
+        const winMsgs = results
+          .filter((r) => r.prize > 0)
+          .map((r) => {
+            if (r.isHouseWin) return `Pannello ${r.columnIndex + 1}: 🏠 CASA + €200.000!`;
+            return `Pannello ${r.columnIndex + 1}: Punti ${r.category} (${formatCurrency(r.prize)})`;
           });
 
-          setMatchedByColumn(results.map((r) => r.matchedNumbers));
+        setLastResults(
+          won5
+            ? `🏠🎉 HAI VINTO LA CASA! ${winMsgs.join(' | ')}`
+            : winMsgs.length > 0
+              ? `🎉 ${winMsgs.join(' | ')} · Vincita: ${formatCurrency(totalWon)}`
+              : '😔 Nessuna vincita questa volta.',
+        );
 
-          const totalWon = results.reduce((sum, r) => sum + r.prize, 0);
-          const cost = filled.length * TICKET_COST;
-          const won5 = results.some((r) => r.isHouseWin);
-          setHouseWon(won5);
-
-          const winMsgs = results
-            .filter((r) => r.prize > 0)
-            .map((r) => {
-              if (r.isHouseWin) return `Pannello ${r.columnIndex + 1}: 🏠 CASA + €200.000!`;
-              return `Pannello ${r.columnIndex + 1}: Punti ${r.category} (${formatCurrency(r.prize)})`;
-            });
-
-          setLastResults(
-            won5
-              ? `🏠🎉 HAI VINTO LA CASA! ${winMsgs.join(' | ')}`
-              : winMsgs.length > 0
-                ? `🎉 ${winMsgs.join(' | ')} · Vincita: ${formatCurrency(totalWon)}`
-                : '😔 Nessuna vincita questa volta.',
-          );
-
-          gameIdRef.current++;
-          setGameHistory((prev) => [
-            ...prev,
-            { id: gameIdRef.current, extraction: ext, results, totalWon, cost },
-          ]);
-
-          setIsAnimating(false);
-        }, 500);
-      }
-    }, 400);
-  }, [columns]);
+        gameIdRef.current++;
+        setGameHistory((prev) => [
+          ...prev,
+          { id: gameIdRef.current, extraction: ext, results, totalWon, cost },
+        ]);
+      },
+    });
+  }, [columns, isAnimating, runAnimation]);
 
   return (
     <div className="theme-vincicasa min-h-screen">
